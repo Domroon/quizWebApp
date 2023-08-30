@@ -49,18 +49,11 @@ class Question(BaseModel):
         self.already_asked.clear()
         self.save()
 
-
-class TruthAnswer(BaseModel):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=False)
-    is_true = models.BooleanField(null=False, default=False)
-
-    def __str__(self):
-        return f'{self.question.question_text} - {self.is_true}'
-
-
+        
 class BasicAnswer(BaseModel):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=False)
-    answer_text = models.CharField(max_length=60, null=True, blank=False)
+    answer_text = models.CharField(max_length=60, null=True, blank=True)
+    explanation = models.CharField(max_length=60, null=True, blank=True)
     is_true = models.BooleanField(null=False, default=False)
 
     def __str__(self):
@@ -68,8 +61,9 @@ class BasicAnswer(BaseModel):
 
 
 class Statistic(BaseModel):
-    answered_questions_count = models.IntegerField(default=0)
-    right_answers_count = models.IntegerField(default=0)
+    user = models.ForeignKey(User, null=True, blank=False, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, null=True, blank=False, on_delete=models.CASCADE)
+    right_answered = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.id} - Total: {self.answered_questions_count} - Right: {self.right_answers_count}'
@@ -82,19 +76,15 @@ class Round(BaseModel):
     ]
     modus = models.CharField(max_length=1, choices=MODIS, null=True, blank=False)
     questions = models.ManyToManyField(Question)
+    answered_questions_count = models.IntegerField(default=0)
     user = models.ForeignKey(User, null=True, blank=False, on_delete=models.CASCADE)
-    statistic = models.ForeignKey(Statistic, null=True, blank=False,on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.id} - {self.modus} - {self.user.username} - {self.created_at}'
 
 
-
-
-
 admin.site.register(Picture)
 admin.site.register(Question)
-admin.site.register(TruthAnswer)
 admin.site.register(BasicAnswer)
 admin.site.register(Round)
 admin.site.register(Statistic)

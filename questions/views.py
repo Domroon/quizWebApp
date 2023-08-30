@@ -49,13 +49,11 @@ def get_random_questions(questions, qty, playing_user, topic=None):
 def round_menu(request):
     # get modus (M or T) from Form via POST Request
     modus = "M"
-    questions = get_list_or_404(Question)
     # get logged in user
     user = User.objects.get(username='domroon')
+    questions = get_list_or_404(Question)
     random_questions = get_random_questions(questions, 5, user)
-    statistic = Statistic()
-    statistic.save()
-    user_round = Round(modus=modus, user=user, statistic=statistic)
+    user_round = Round(modus=modus, user=user)
     user_round.save()
     for question in random_questions:
         user_round.questions.add(question)
@@ -71,14 +69,13 @@ def round(request):
     user = User.objects.get(username='domroon')
     user_round = Round.objects.filter(user__id=user.id).order_by("-created_at")[0]
     questions = user_round.questions.all()
-    question_num = user_round.statistic.answered_questions_count
+    question_num = user_round.answered_questions_count
     if question_num == len(questions):
         return HttpResponse("All questions are answered. Redirect to final result")
     question = questions[question_num]
-    user_round.statistic.answered_questions_count = question_num + 1
+    user_round.answered_questions_count = question_num + 1
     # check if the answer is correct
-    # if the answer is correct: +1 to right_answers count
-    user_round.statistic.save()
+    user_round.save()
     return HttpResponse(question)
 
 
