@@ -3,7 +3,15 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 
 
-class Picture(models.Model):
+class BaseModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class Picture(BaseModel):
     name = models.CharField(max_length=30, default="unnamed")
     image = models.ImageField(null=True, blank=False, upload_to="media")
     description = models.CharField(max_length=60, null=True, blank=True)
@@ -12,7 +20,7 @@ class Picture(models.Model):
         return self.name
 
 
-class Question(models.Model):
+class Question(BaseModel):
     TYPES = [
         ("TR", "Truth"),
         ("MU", "Multi"),
@@ -37,8 +45,12 @@ class Question(models.Model):
     def __str__(self):
         return f'{self.question_type} - {self.question_text}'
 
+    def clear_already_asked(self):
+        self.already_asked.clear()
+        self.save()
 
-class TruthAnswer(models.Model):
+
+class TruthAnswer(BaseModel):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=False)
     is_true = models.BooleanField(null=False, default=False)
 
@@ -46,7 +58,7 @@ class TruthAnswer(models.Model):
         return f'{self.question.question_text} - {self.is_true}'
 
 
-class BasicAnswer(models.Model):
+class BasicAnswer(BaseModel):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=False)
     answer_text = models.CharField(max_length=60, null=True, blank=False)
     is_true = models.BooleanField(null=False, default=False)
@@ -55,7 +67,15 @@ class BasicAnswer(models.Model):
         return f'{self.question.question_text} - {self.answer_text} - {self.is_true}'
 
 
-class Round(models.Model):
+class Statistic(BaseModel):
+    answered_questions_count = models.IntegerField(default=0)
+    right_answers_count = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f'{self.id} - Total: {self.answered_questions_count} - Right: {self.right_answers_count}'
+
+
+class Round(BaseModel):
     MODIS = [
         ("M", "MIXED"),
         ("T", "TOPIC")
@@ -63,18 +83,13 @@ class Round(models.Model):
     modus = models.CharField(max_length=1, choices=MODIS, null=True, blank=False)
     questions = models.ManyToManyField(Question)
     user = models.ForeignKey(User, null=True, blank=False, on_delete=models.CASCADE)
+    statistic = models.ForeignKey(Statistic, null=True, blank=False,on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.id} - {self.modus}'
+        return f'{self.id} - {self.modus} - {self.user.username} - {self.created_at}'
 
 
-class Statistics(models.Model):
-    user = models.ForeignKey(User, null=True, blank=False, on_delete=models.CASCADE)
-    answered_questions_count = models.IntegerField(default=0)
-    right_answers_count = models.IntegerField(default=0)
 
-    def __str__(self):
-        return f'{self.id} - {self.user.username}'
 
 
 admin.site.register(Picture)
@@ -82,4 +97,4 @@ admin.site.register(Question)
 admin.site.register(TruthAnswer)
 admin.site.register(BasicAnswer)
 admin.site.register(Round)
-admin.site.register(Statistics)
+admin.site.register(Statistic)
