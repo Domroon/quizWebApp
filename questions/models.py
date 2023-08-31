@@ -66,7 +66,7 @@ class Statistic(BaseModel):
     right_answered = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'{self.id} - Total: {self.answered_questions_count} - Right: {self.right_answers_count}'
+        return f'{self.id} - {self.user} - {self.question.question_text} - {self.right_answered}'
 
 
 class Round(BaseModel):
@@ -78,6 +78,7 @@ class Round(BaseModel):
     questions = models.ManyToManyField(Question)
     answered_questions_count = models.IntegerField(default=0)
     user = models.ForeignKey(User, null=True, blank=False, on_delete=models.CASCADE)
+    completed = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.id} - {self.modus} - {self.user.username} - {self.created_at}'
